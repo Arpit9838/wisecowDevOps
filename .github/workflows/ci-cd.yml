@@ -28,7 +28,7 @@ jobs:
 
   
   deploy:
-    if: ${{ secrets.KUBE_CONFIG != '' }}
+    if: ${{ secrets.KUBE_CONFIG }}
     needs: build
     runs-on: ubuntu-latest
 
@@ -50,3 +50,4 @@ jobs:
         run: |
           kubectl apply -f k8s/
           kubectl rollout status deployment/wisecow-deployment -n default
+
