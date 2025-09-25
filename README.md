@@ -1,28 +1,61 @@
-# Cow wisdom web server
+# Wisecow App - Kubernetes Deployment with CI/CD
 
-## Prerequisites
+This project is part of the **Accuknox DevOps Trainee Practical Assessment**.  
+The goal is to **containerize, deploy, secure, and automate** the Wisecow application.
 
-```
-sudo apt install fortune-mod cowsay -y
-```
+---
 
-## How to use?
+## Problem Statement 1 – Containerisation & Deployment
 
-1. Run `./wisecow.sh`
-2. Point the browser to server port (default 4499)
+- **Dockerization**:  
+  A `Dockerfile` is included to build a container image for the Wisecow application.  
 
-## What to expect?
-![wisecow](https://github.com/nyrahul/wisecow/assets/9133227/8d6bfde3-4a5a-480e-8d55-3fef60300d98)
+- **Kubernetes Deployment**:  
+  Manifests are stored in the [`k8s/`](./k8s) directory:
+  - `namespace.yaml`
+  - `deployment.yaml`
+  - `service.yaml`
+  - `ingress.yaml`
+  - `ingress-nginx-svc.yaml`
+  - `cadvisor.yaml`
+  - `kubearmor-policy.yaml` (optional, Zero-Trust security)
 
-# Problem Statement
-Deploy the wisecow application as a k8s app
+- **Ingress + TLS**:  
+  The app is exposed via `https://wisecow.local` using a self-signed certificate (`wisecow.crt` + `wisecow.key`).  
+  TLS secret must be created manually inside Kubernetes:  
 
-## Requirement
-1. Create Dockerfile for the image and corresponding k8s manifest to deploy in k8s env. The wisecow service should be exposed as k8s service.
-2. Github action for creating new image when changes are made to this repo
-3. [Challenge goal]: Enable secure TLS communication for the wisecow app.
+  ```bash
+  kubectl create secret tls wisecow-tls \
+    --cert=wisecow.crt \
+    --key=wisecow.key \
+    -n wisecow
 
-## Expected Artifacts
-1. Github repo containing the app with corresponding dockerfile, k8s manifest, any other artifacts needed.
-2. Github repo with corresponding github action.
-3. Github repo should be kept private and the access should be enabled for following github IDs: nyrahul
+
+Problem Statement 2 – System Health Monitoring
+
+A script scripts/system_health_check.sh monitors:
+
+CPU usage
+
+Memory usage
+
+Disk usage
+
+Running processes
+
+⚠️ If CPU > 80%, it prints an alert.
+
+Run inside Minikube:
+
+minikube ssh
+sh /home/docker/system_health_check.sh
+
+📌 Problem Statement 3 – Zero-Trust (Optional)
+
+A sample KubeArmor policy is included in k8s/kubearmor-policy.yaml.
+
+Requires KubeArmor to be installed in the cluster:
+
+helm repo add kubearmor https://kubearmor.github.io/charts
+helm install kubearmor kubearmor/kubearmor -n kubearmor --create-namespace
+kubectl apply -f k8s/kubearmor-policy.yaml -n wisecow
