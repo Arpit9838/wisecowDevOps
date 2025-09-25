@@ -34,11 +34,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Ensure KUBE_CONFIG exists
-        if: ${{ !secrets.KUBE_CONFIG }}
+      - name: Check if KUBE_CONFIG is set
         run: |
-          echo "KUBE_CONFIG secret not set, skipping deployment."
-          exit 1
+          if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo "KUBE_CONFIG secret is not set. Exiting deployment."
+            exit 1
+          fi
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
