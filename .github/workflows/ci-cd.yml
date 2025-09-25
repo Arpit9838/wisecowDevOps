@@ -3,7 +3,7 @@ name: CI/CD Pipeline - Wisecow
 on:
   push:
     branches:
-      - main   
+      - main
   pull_request:
 
 jobs:
@@ -11,10 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+     
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      
+    
       - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
@@ -28,7 +29,7 @@ jobs:
           docker build -t $IMAGE .
           docker push $IMAGE
 
-      
+     
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
         with:
@@ -37,11 +38,21 @@ jobs:
       
       - name: Configure kubectl
         run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig
+          chmod 600 kubeconfig
+          export KUBECONFIG=$PWD/kubeconfig
 
-      
-      - name: Deploy to Kubernetes
+     
+      - name: Deploy manifests
         run: |
           kubectl apply -f k8s/
           kubectl rollout status deployment/wisecow-deployment -n default
+
+    
+      - name: Apply TLS secret
+        run: |
+          kubectl create secret tls wisecow-tls \
+            --cert=wisecow.crt \
+            --key=wisecow.key \
+            --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f k8s/ingress.yaml
