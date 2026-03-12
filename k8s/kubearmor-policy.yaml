@@ -2,29 +2,44 @@ apiVersion: security.kubearmor.com/v1
 kind: KubeArmorPolicy
 metadata:
   name: wisecow-zero-trust
-  namespace: wisecow
+  namespace: default
+
+
 spec:
   selector:
     matchLabels:
       app: wisecow
-  file:
-    matchPaths:
-      # Audit any write to /etc (so we can detect tampering)
-      - path: /etc/**
-        action: Audit
-      # Block write to sensitive paths
-      - path: /var/lib/postgresql/**
-        action: Block
+
+  severity: 5
+  message: "Zero trust policy for wisecow"
+  action: Audit
+
   process:
     matchPaths:
-      # Block common tools that could be used for exfiltration
       - path: /usr/bin/curl
-      - path: /usr/bin/wget
-      - path: /usr/bin/nc
-    action: Block
+        action: Audit
+
   network:
     matchProtocols:
-      - tcp
-    matchPorts:
-      - port: 22
+      - protocol: TCP
+  file:
+    matchPaths:
+      - path: /etc/**
+        action: Audit
+      - path: /var/lib/postgresql/**
         action: Block
+
+  process:
+    matchPaths:
+      - path: /usr/bin/curl
+        action: Block
+      - path: /usr/bin/wget
+        action: Block
+      - path: /usr/bin/nc
+        action: Block
+
+  network:
+    matchProtocols:
+      - protocol: TCP
+
+  action: Block
